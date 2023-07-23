@@ -1,6 +1,6 @@
 {
   "name": "editorjs-yjs",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Yjs plugin for collaborative work on Editor.js",
   "main": "src/index.js",
   "scripts": {
