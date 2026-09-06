@@ -1,15 +1,16 @@
 {
-  "name": "y-editorjs",
-  "version": "1.0.4",
-  "description": "Yjs plugin for collaborative work on Editor.js",
-  "main": "src/index.js",
+  "name": "editorjs-yjs",
+  "version": "0.1.2",
+  "description": "Yjs-based real-time collaboration for Editor.js: whole-block content sync, presence/awareness, and a conflict-highlight Block Tune. Framework-agnostic — takes a WebSocket URL, room, ticket, and user identity through its own config; has no dependency on any particular backend.",
+  "main": "dist/bundle.js",
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "devDependencies": {
-    "css-loader": "^6.8.1",
-    "style-loader": "^3.3.3",
-    "webpack-cli": "^5.1.4"
+    "build": "webpack --mode production",
+    "build:dev": "webpack --mode development --watch",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "yjs",
@@ -17,12 +18,33 @@
     "editor.js",
     "plugin",
     "tool",
-    "variables"
+    "collaboration",
+    "crdt"
   ],
-  "author": "xkzl",
+  "author": "Marco Meyer <marco.meyer@glitchr.io>",
   "license": "GPL",
   "repository": {
     "url": "ssh://git@gitlab.glitchr.dev:public-repository/javascript/editor-js/yjs.git",
     "type": "git"
+  },
+  "peerDependencies": {
+    "y-websocket": "^2.1.0",
+    "yjs": "^13.6.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/preset-env": "^7.16.4",
+    "@editorjs/editorjs": "^2.31.6",
+    "@editorjs/header": "^2.8.9",
+    "@editorjs/paragraph": "^2.11.7",
+    "babel-loader": "^8.2.3",
+    "css-loader": "^6.5.1",
+    "esbuild": "^0.28.2",
+    "raw-loader": "^4.0.2",
+    "style-loader": "^3.3.1",
+    "webpack": "^5.65.0",
+    "webpack-cli": "^4.9.1",
+    "y-websocket": "^2.1.0",
+    "yjs": "^13.6.0"
   }
 }

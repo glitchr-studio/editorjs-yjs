@@ -1,0 +1,63 @@
+.ce-collab-block {
+    position: relative;
+    border-radius: 4px;
+    transition: box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.ce-collab-block--focused {
+    box-shadow: 0 0 0 2px var(--collab-color, #3a9bd9);
+}
+
+.ce-collab-badge {
+    position: absolute;
+    top: -10px;
+    right: 4px;
+    display: flex;
+    gap: 4px;
+    pointer-events: none;
+}
+
+.ce-collab-name {
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 600;
+    color: #111;
+    padding: 3px 7px;
+    border-radius: 999px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+}
+
+.ce-collab-block--conflict {
+    background-color: rgba(226, 160, 58, 0.12);
+    box-shadow: 0 0 0 2px #e2a03a;
+}
+
+.ce-collab-conflict {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: rgba(226, 160, 58, 0.18);
+    font-size: 12px;
+}
+
+.ce-collab-conflict button {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.ce-collab-conflict button:first-of-type {
+    background: #3a5fd9;
+    color: #fff;
+}
+
+.ce-collab-conflict button:last-of-type {
+    background: #444;
+    color: #fff;
+}
