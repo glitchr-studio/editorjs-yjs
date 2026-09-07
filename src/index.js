@@ -73,7 +73,19 @@ export default class EditorYjs {
         this.provider = new WebsocketProvider(base, encodeURIComponent(room), this.ydoc, {
             connect: false,
             params: { ticket: ticket || '' },
+            // y-websocket's default cap is 2.5s. While the relay (or the
+            // ticket) is unavailable that is a reconnect every couple of
+            // seconds, for as long as the tab stays open - measured live at
+            // ~70 handshakes a minute from a single tab. A relay outage is
+            // not something a tighter loop resolves any sooner; one attempt
+            // every half minute is plenty to pick the connection back up.
+            maxBackoffTime: 30000,
         });
+
+        // Set once the host has definitively declined to authorize this
+        // session (getTicket() resolved to nothing, as opposed to throwing).
+        // See _refreshTicket().
+        this._suspended = false;
 
         this.provider.awareness.setLocalStateField('user', { name: this.user.name, color: this.user.color });
 
@@ -106,11 +118,11 @@ export default class EditorYjs {
             }
         };
 
+        this._ticketRefreshMs = ticketRefreshMs;
         this._connectReady = this._resolveInitialTicket(ticket).then(() => {
+            if (this._suspended) return;
             this.provider.connect();
-            if (this.getTicket && ticketRefreshMs > 0) {
-                this._ticketTimer = setInterval(() => this._refreshTicket(), ticketRefreshMs);
-            }
+            this._startTicketTimer();
         });
 
         // A timer alone is not a sufficient refresh strategy, and relying on
@@ -144,11 +156,54 @@ export default class EditorYjs {
 
             if (typeof document !== 'undefined') {
                 this._onVisibilityChange = () => {
-                    if (document.visibilityState === 'visible') this._refreshTicket();
+                    if (document.visibilityState !== 'visible') return;
+                    if (this._suspended) this._resume(); else this._refreshTicket();
                 };
                 document.addEventListener('visibilitychange', this._onVisibilityChange);
             }
         }
+    }
+
+    _startTicketTimer() {
+        if (this._ticketTimer) clearInterval(this._ticketTimer);
+        this._ticketTimer = null;
+        if (this.getTicket && this._ticketRefreshMs > 0) {
+            this._ticketTimer = setInterval(() => this._refreshTicket(), this._ticketRefreshMs);
+        }
+    }
+
+    // The host answered the ticket request, and the answer was "no": the
+    // app session behind this tab is gone (logged out elsewhere, expired),
+    // or the relay has been unconfigured. No amount of retrying changes
+    // that - only the user can, by signing in again - so stop asking.
+    // Left running, the connection-close hook and y-websocket's reconnect
+    // fed each other indefinitely: every rejected handshake triggered a
+    // refresh that could only fail, and the next reconnect followed within
+    // seconds. Live, a single tab left open after a logout hammered the
+    // app at ~130 requests a minute for hours and made the browser crawl.
+    _suspend() {
+        if (this._suspended) return;
+        this._suspended = true;
+        if (this._ticketTimer) clearInterval(this._ticketTimer);
+        this._ticketTimer = null;
+        // disconnect() clears shouldConnect, so the reconnect y-websocket
+        // has already scheduled for the last close becomes a no-op.
+        this.provider.disconnect();
+        console.warn('editorjs-yjs: the host declined to issue a ticket; live collaboration is paused until this tab is focused with a valid session again');
+    }
+
+    // Only ever tried when the user comes back to the tab: that is the one
+    // moment a session may plausibly have been restored (a fresh sign-in in
+    // another tab), and it is rate-limited by the user, not by a timer.
+    async _resume() {
+        let fresh = null;
+        try { fresh = await this.getTicket(); } catch (e) { return; }
+        if (!fresh) return;
+        this._suspended = false;
+        this.provider.params.ticket = fresh;
+        this.provider.connect();
+        this._startTicketTimer();
+        console.info('editorjs-yjs: ticket issued again, live collaboration resumed');
     }
 
     async _resolveInitialTicket(staticTicket) {
@@ -159,16 +214,28 @@ export default class EditorYjs {
         }
     }
 
+    // Two failure modes, told apart by how getTicket() fails:
+    //
+    //   it THROWS  - the request itself did not go through (network, the
+    //                app briefly down). Nothing is known about the session,
+    //                so keep the current connection and try again on the
+    //                next timer tick or reconnect, under the backoff cap.
+    //
+    //   it RESOLVES to nothing - the app answered, and refused. That is a
+    //                verdict, not a glitch: see _suspend().
     async _refreshTicket() {
+        if (this._suspended) return;
+        let fresh;
         try {
-            const fresh = await this.getTicket();
-            if (fresh) this.provider.params.ticket = fresh;
+            fresh = await this.getTicket();
         } catch (e) {
-            // A network problem occurred, or the app's session expired.
-            // In this case, the existing connection, if a connection
-            // exists, continues to run. The next timer event or
-            // reconnection attempt will try this operation again.
             console.warn('editorjs-yjs: getTicket() failed, will retry', e);
+            return;
+        }
+        if (fresh) {
+            this.provider.params.ticket = fresh;
+        } else {
+            this._suspend();
         }
     }
 

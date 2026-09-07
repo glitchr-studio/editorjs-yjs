@@ -1,6 +1,6 @@
 {
   "name": "editorjs-yjs",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Yjs-based real-time collaboration for Editor.js: whole-block content sync, presence/awareness, and a conflict-highlight Block Tune. Framework-agnostic — takes a WebSocket URL, room, ticket, and user identity through its own config; has no dependency on any particular backend.",
   "main": "dist/bundle.js",
   "files": [
