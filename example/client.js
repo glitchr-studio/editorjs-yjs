@@ -12,7 +12,14 @@ import Header from '@editorjs/header';
 import Paragraph from '@editorjs/paragraph';
 import EditorYjs from '../src/index.js';
 
-const WS_URL = window.COLLAB_DEMO_WS_URL || 'ws://localhost:1234';
+// The relay's origin. `localhost` was hard-coded here, which breaks in two
+// ordinary cases: opening the demo from another machine on the network, and
+// remapping the relay's port because 1234 is already taken. So: an explicit
+// global wins, then a `?ws=` query parameter, then the page's own host on the
+// default port - which is what `localhost` used to mean anyway.
+const WS_URL = window.COLLAB_DEMO_WS_URL
+    || new URLSearchParams(window.location.search).get('ws')
+    || 'ws://' + (window.location.hostname || 'localhost') + ':1234';
 // This code creates a fresh, unpredictable room, for each page load.
 // This method avoids a problem: an old browser tab, from an earlier
 // manual test, can stay connected to a fixed room name, and that tab can

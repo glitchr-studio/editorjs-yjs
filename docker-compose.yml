@@ -1,0 +1,84 @@
+# Zero-setup demo: two live EditorJS instances on one page, editing the same
+# document through a websocket relay.
+#
+#     make demo     ->  http://localhost:8089
+#
+# The relay here is y-websocket's own bundled server, not glitchr's
+# collab-relay. That is deliberate. This package is backend-agnostic - it takes
+# a websocket URL, a room, a ticket and a user identity, and assumes nothing
+# else - so its demo must not drag in a particular backend to run. y-websocket
+# is already a devDependency, and it ignores the ticket the page mints, which
+# is fine for a demo and incidentally proves the point.
+#
+# To try it against a real ticket-checking relay instead, point the page at
+# one: http://localhost:8089/?ws=ws://localhost:1235
+#
+# node_modules is a named volume, not the host's directory: the host's copy may
+# hold binaries built for a different platform (esbuild ships a native binary),
+# and a demo that only works on Linux is not a demo.
+
+name: editorjs-yjs
+
+x-node: &node
+  image: node:22-slim
+  working_dir: /app
+  volumes:
+    - .:/app
+    - node_modules:/app/node_modules
+
+services:
+
+  # Runs once, so relay and demo never race each other writing node_modules.
+  install:
+    <<: *node
+    restart: "no"
+    command: npm install --no-audit --no-fund --loglevel=error
+
+  relay:
+    <<: *node
+    depends_on:
+      install:
+        condition: service_completed_successfully
+    environment:
+      HOST: 0.0.0.0
+      PORT: "1234"
+    command: node node_modules/y-websocket/bin/server.cjs
+    # Change DEMO_RELAY_PORT if 1234 is taken, then open the page with
+    # ?ws=ws://localhost:<that port> - the browser connects to the relay
+    # directly, so it cannot discover a remapped port on its own.
+    ports:
+      - "${DEMO_RELAY_PORT:-1234}:1234"
+    healthcheck:
+      # The server answers plain HTTP 200 on / alongside the websocket upgrade.
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:1234/', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 3s
+
+  # esbuild bundles example/client.js and serves example/ in one process, and
+  # rebuilds on request - so editing src/ or example/ needs only a page reload.
+  # In serve mode it keeps output in memory, so nothing lands in example/dist/.
+  demo:
+    <<: *node
+    # esbuild's serve mode stops the moment stdin closes, which under compose
+    # it does immediately. This is `docker run -i`, and it is what keeps the
+    # server alive.
+    stdin_open: true
+    depends_on:
+      install:
+        condition: service_completed_successfully
+      relay:
+        condition: service_healthy
+    command: >
+      node_modules/.bin/esbuild example/client.js
+      --bundle
+      --format=iife
+      --outfile=example/dist/bundle.js
+      --servedir=example
+      --serve=0.0.0.0:8089
+    ports:
+      - "${DEMO_PORT:-8089}:8089"
+
+volumes:
+  node_modules:

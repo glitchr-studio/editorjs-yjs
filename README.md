@@ -141,21 +141,37 @@ collab.destroy();
 ## Local test harness
 
 The `example/` directory contains two real EditorJS instances on one page.
-Each instance uses this package. Both instances join the same room,
-through a separate [`collab-relay`](../base-bundle/collab-relay) instance.
-You must start this relay instance yourself.
+Each instance uses this package. Both instances join the same room. Type in
+one pane; the other pane follows.
 
+Run this command:
 ```sh
-# In a separate terminal, inside base-bundle's collab-relay/ directory, run:
-docker compose up
-
-# Then, in this directory, run these commands:
-npm install
-npm run build           # This command creates the package bundle. The example uses src/ directly.
-npx esbuild example/client.js --bundle --outfile=example/dist/bundle.js --format=iife
-python3 -m http.server 8089 --directory example
-# Open this address: http://localhost:8089/
+make demo       # Then open this address: http://localhost:8089
 ```
+
+This command needs Docker. This command needs nothing else: no local Node,
+no global installs. This command starts two containers. The first container
+is a websocket relay. The second container builds `example/client.js` and
+serves `example/`. The build step rebuilds on request, so a change to
+`src/` or to `example/` needs only a page reload.
+
+Run `make` alone for the full target list. Run `make stop` to stop the
+demo. Run `make clean` to also remove the dependency volume.
+
+If port 1234 is already in use, run this command instead:
+```sh
+make demo RELAY_PORT=1235
+# Then open this address: http://localhost:8089/?ws=ws://localhost:1235
+```
+The browser reaches the relay directly, so the page cannot discover a
+remapped port on its own. The `?ws=` parameter supplies it.
+
+The relay in this demo is `y-websocket`'s own bundled server, not
+[`collab-relay`](../base-bundle/collab-relay). This package assumes nothing
+about the backend, so its demo must not require a particular one. That
+server ignores the ticket, which suits a demo. To exercise a real
+ticket-checking relay, start that relay and pass its address through the
+same `?ws=` parameter.
 
 The example creates a false ticket inside the browser. This ticket uses a
 Web Crypto HMAC signature. This ticket uses a shared `dev-secret` value.
