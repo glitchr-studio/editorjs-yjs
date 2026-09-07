@@ -55,7 +55,7 @@ import EditorJS from '@editorjs/editorjs';
 import EditorYjs from 'editorjs-yjs';
 
 const collab = new EditorYjs({
-    wsUrl: 'wss://your-host/collab',
+    wsUrl: 'wss://your-host',       // bare origin — this package appends /collab/<room> itself
     room: 'some-opaque-room-id',       // this package does not parse this value
     getTicket: () => fetchTicketFromYourBackend(),
     user: { name: 'Marco', color: '#3a9bd9' },
@@ -80,7 +80,7 @@ collab.destroy();
 
 | Option              | Required | Description |
 |----------------------|----------|-------------|
-| `wsUrl`              | yes      | This is the base WebSocket URL. Do not add a room or a ticket to this value. Example: `"wss://host/collab"`. |
+| `wsUrl`              | yes      | This is the relay's bare origin, with no path. This package appends `/collab/<room>` itself — do not add `/collab`, a room, or a ticket to this value. Example: `"wss://host"`. |
 | `room`               | yes      | This is an opaque room identifier. This package does not parse this value. This package makes no assumption about this value. |
 | `ticket`             | one of `ticket`/`getTicket` | This is a ready-made ticket string. |
 | `getTicket`          | one of `ticket`/`getTicket` | This is a function with this signature: `async () => string`. This package calls this function for the first connection. This package also calls this function on a timer (`ticketRefreshMs`, default 45000 milliseconds). Because of this function, this package does not need information about ticket creation or ticket duration. |

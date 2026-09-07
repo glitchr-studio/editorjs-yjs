@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>editorjs-yjs test harness</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #14161a; color: #e8e8e8; margin: 0; padding: 24px; }
+  h1 { font-size: 1.1rem; font-weight: 600; margin: 0 0 4px; }
+  p.hint { color: #999; margin: 0 0 20px; font-size: 0.85rem; }
+  .panes { display: flex; gap: 20px; }
+  .pane { flex: 1; border: 1px solid #333; border-radius: 8px; padding: 12px; background: #1c1f24; }
+  .pane h2 { font-size: 0.95rem; margin: 0 0 8px; }
+  .status { display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; margin-bottom: 10px; }
+  .status--connected { background: #1f4d2e; color: #7ee2a0; }
+  .status--disconnected, .status--connecting { background: #4d2e1f; color: #e2a07e; }
+  .editor-holder { background: #fff; color: #111; border-radius: 6px; min-height: 260px; padding: 12px; }
+  .editor-holder .ce-block { color: #111; }
+</style>
+<link rel="stylesheet" href="dist/bundle.css">
+</head>
+<body>
+  <h1>editorjs-yjs test harness</h1>
+  <p class="hint">
+    Two independent EditorJS instances, each wired to editorjs-yjs, both joining the same room via collab-relay (must be running separately — see ../../collab-relay). Type in one, watch the other.
+  </p>
+  <div class="panes">
+    <div class="pane" data-name="Marco" data-color="#3a9bd9">
+      <h2>Marco</h2>
+      <span class="status status--connecting">connecting</span>
+      <div class="editor-holder"></div>
+    </div>
+    <div class="pane" data-name="Sasha" data-color="#e2a03a">
+      <h2>Sasha</h2>
+      <span class="status status--connecting">connecting</span>
+      <div class="editor-holder"></div>
+    </div>
+  </div>
+  <script src="dist/bundle.js"></script>
+</body>
+</html>
