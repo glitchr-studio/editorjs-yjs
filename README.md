@@ -99,10 +99,26 @@ collab.destroy();
   package does not merge or overwrite the block silently.
 - **Presence channel.** This package uses `y-protocols/awareness`, through
   `y-websocket`'s `WebsocketProvider.awareness` property. Each client
-  sends this data: `{user, focusedBlockId}`. This package updates this
-  data through `focusin` events and `focusout` events on the editor
-  holder. This package finds the correct block through EditorJS's
-  `blocks.getBlockByElement()` method.
+  sends this data: `{user, focusedBlockId, cursor}`. This package updates
+  `focusedBlockId` through `focusin` events and `focusout` events on the
+  editor holder. This package updates `cursor` through the document's
+  `selectionchange` event, coalesced to one animation frame and ignored
+  when the selection is outside the holder. This package finds the
+  correct block through EditorJS's `blocks.getBlockByElement()` method.
+- **Carets.** `cursor` has this format: `{blockId, anchor, head}`. The
+  offsets are character counts inside the block's `contenteditable`,
+  measured over text nodes in document order. On the receiving side, the
+  Block Tune draws a caret in the other user's color at `head`, with a
+  small flag on top so it stays findable, and shows the user's name on
+  hover - and for a moment after each move. When `anchor` and `head`
+  differ, the Tune tints the selected range too. The Tune re-resolves
+  every caret when the block's content changes (a `MutationObserver` on
+  the tool's element) and when the block's width changes (a
+  `ResizeObserver` on the wrapper), so a caret stays in place through
+  typing and reflow. This is not a CRDT position: this package syncs whole
+  blocks, so there is no `Y.Text` to anchor to. A caret can therefore be
+  briefly off between someone else's edit to that block and the owner's
+  next `selectionchange`, which follows as soon as the edit reaches them.
 - **Local-to-remote synchronization.** This package uses one debounced,
   full-state comparison for this direction. Refer to
   `ContentBinding.syncLocalToYArray`. This package does not use one

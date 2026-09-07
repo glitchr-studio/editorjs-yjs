@@ -192,6 +192,18 @@ export default class EditorYjs {
         this._onFocusOut = () => {
             this._focusedBlockId = undefined;
             this.provider.awareness.setLocalStateField('focusedBlockId', undefined);
+            this._publishCursor(null);
+        };
+
+        // The caret. `selectionchange` only exists on document, and fires
+        // for every caret move anywhere on the page, so it is coalesced to a
+        // frame and ignored unless the selection sits inside this holder.
+        this._onSelectionChange = () => {
+            if (this._cursorFrame != null) return;
+            this._cursorFrame = requestAnimationFrame(() => {
+                this._cursorFrame = null;
+                this._publishCursor(this._readLocalCursor());
+            });
         };
 
         const holderEl = typeof holder === 'string' ? document.getElementById(holder) : holder;
@@ -199,6 +211,7 @@ export default class EditorYjs {
         if (this._holderEl) {
             this._holderEl.addEventListener('focusin', this._onFocusIn);
             this._holderEl.addEventListener('focusout', this._onFocusOut);
+            document.addEventListener('selectionchange', this._onSelectionChange);
         }
 
         // Wait for the room's existing state to arrive BEFORE handing over to
@@ -254,6 +267,48 @@ export default class EditorYjs {
         });
     }
 
+    /**
+     * Where the local caret is, as { blockId, anchor, head } character
+     * offsets inside the block's contenteditable - or null when the
+     * selection is not inside this editor. Offsets are measured the same way
+     * PresenceTune resolves them on the receiving side (text nodes in
+     * document order), so neither side needs to know a tool's markup.
+     */
+    _readLocalCursor() {
+        if (!this._holderEl || !this.editor) return null;
+        const sel = document.getSelection();
+        if (!sel || sel.rangeCount === 0 || !sel.anchorNode) return null;
+        if (!this._holderEl.contains(sel.anchorNode)) return null;
+
+        const anchorEl = sel.anchorNode.nodeType === Node.TEXT_NODE ? sel.anchorNode.parentElement : sel.anchorNode;
+        const host = anchorEl && anchorEl.closest('[contenteditable="true"]');
+        if (!host || !this._holderEl.contains(host)) return null;
+
+        const blockAPI = this.editor.blocks.getBlockByElement(host);
+        if (!blockAPI) return null;
+
+        const offsetOf = (node, offset) => {
+            if (!host.contains(node)) return null;
+            const range = document.createRange();
+            range.setStart(host, 0);
+            range.setEnd(node, offset);
+            return range.toString().length;
+        };
+        const anchor = offsetOf(sel.anchorNode, sel.anchorOffset);
+        const head = sel.focusNode ? offsetOf(sel.focusNode, sel.focusOffset) : anchor;
+        if (anchor == null) return null;
+
+        return { blockId: blockAPI.id, anchor, head: head == null ? anchor : head };
+    }
+
+    /** Broadcasts the caret only when it actually changed - awareness sends on every set. */
+    _publishCursor(cursor) {
+        const key = cursor ? cursor.blockId + ':' + cursor.anchor + ':' + cursor.head : '';
+        if (key === this._lastCursorKey) return;
+        this._lastCursorKey = key;
+        this.provider.awareness.setLocalStateField('cursor', cursor || undefined);
+    }
+
     /** Pass this property directly as EditorJS's `onChange` option. */
     get onChange() {
         return this.binding.handleLocalChange;
@@ -290,7 +345,20 @@ export default class EditorYjs {
         this.provider.awareness.getStates().forEach((state, clientId) => {
             // This method never shows a badge for the local user.
             if (clientId === this.ydoc.clientID) return;
-            if (state.focusedBlockId === blockId && state.user) users.push(state.user);
+            if (!state.user) return;
+            // A caret inside the block counts as presence in its own right:
+            // focusin is not the only way into a block (keyboard selection
+            // extension, programmatic focus), and the caret is what the
+            // user actually sees.
+            const inBlock = state.focusedBlockId === blockId || (state.cursor && state.cursor.blockId === blockId);
+            if (!inBlock) return;
+            users.push({
+                ...state.user,
+                clientId,
+                // The caret travels separately from focus and can lag it by
+                // an update; only hand a Tune a caret that is in its block.
+                cursor: state.cursor && state.cursor.blockId === blockId ? state.cursor : null,
+            });
         });
         return users;
     }
@@ -325,7 +393,9 @@ export default class EditorYjs {
         if (this._holderEl) {
             this._holderEl.removeEventListener('focusin', this._onFocusIn);
             this._holderEl.removeEventListener('focusout', this._onFocusOut);
+            document.removeEventListener('selectionchange', this._onSelectionChange);
         }
+        if (this._cursorFrame != null) cancelAnimationFrame(this._cursorFrame);
         this.provider.awareness.off('change', this._onAwarenessChange);
         this.binding.destroy();
         this.provider.destroy();
