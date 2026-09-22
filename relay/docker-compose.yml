@@ -1,0 +1,42 @@
+# Standalone LOCAL DEV compose for this relay in isolation — NOT the
+# production integration pattern (see README.md's "Deployment with the
+# app" section for the snippet that goes into an app's own docker-compose.yml
+# with real networks/${APP_NAME}). This one is for running/poking at the
+# relay + a demo page on their own, without the full Symfony app.
+#
+#   docker compose up --build
+#
+# then open http://localhost:8088 — two independent Y.Doc connections to
+# the same room, in one page (stands in for two browser tabs). The demo page
+# mints its own ticket in-browser against COLLAB_TICKET_SECRET below (see
+# example/client.js) — that's a dev-only stand-in for
+# ux_editorjs_collabTicket, which is the only real ticket source in
+# production.
+services:
+  relay:
+    build:
+      context: .
+    container_name: editorjs-yjs-relay-dev
+    restart: unless-stopped
+    environment:
+      COLLAB_TICKET_SECRET: dev-secret
+      COLLAB_RELAY_PORT: 1234
+    ports:
+      - "1234:1234"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:1234/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  example:
+    image: nginx:alpine
+    container_name: editorjs-yjs-relay-example
+    restart: unless-stopped
+    volumes:
+      - ./example:/usr/share/nginx/html:ro
+    ports:
+      - "8088:80"
+    depends_on:
+      relay:
+        condition: service_healthy

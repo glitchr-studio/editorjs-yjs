@@ -1,3 +1,5 @@
 node_modules/
 dist/
 example/dist/
+# The relay demo page is served as static files, without a build step.
+!relay/example/dist/

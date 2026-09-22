@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>editorjs-yjs relay local demo</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #14161a; color: #e8e8e8; margin: 0; padding: 24px; }
+  h1 { font-size: 1.1rem; font-weight: 600; margin: 0 0 4px; }
+  p.hint { color: #999; margin: 0 0 20px; font-size: 0.85rem; }
+  .panes { display: flex; gap: 20px; }
+  .pane { flex: 1; border: 1px solid #333; border-radius: 8px; padding: 12px; background: #1c1f24; }
+  .pane h2 { font-size: 0.95rem; margin: 0 0 8px; }
+  .status { display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; margin-bottom: 10px; }
+  .status--connected { background: #1f4d2e; color: #7ee2a0; }
+  .status--disconnected, .status--connecting { background: #4d2e1f; color: #e2a07e; }
+  .presence { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; min-height: 22px; }
+  .presence-badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; color: #111; font-weight: 600; }
+  .presence-badge--self { outline: 2px solid #fff; }
+  .messages { height: 220px; overflow-y: auto; background: #111318; border-radius: 6px; padding: 8px; margin-bottom: 10px; font-size: 0.85rem; }
+  .message { margin-bottom: 4px; }
+  .message__author { font-weight: 600; margin-right: 4px; }
+  .row { display: flex; gap: 6px; }
+  .input { flex: 1; background: #111318; border: 1px solid #333; color: #eee; border-radius: 6px; padding: 6px 8px; }
+  .send { background: #3a5fd9; border: none; color: #fff; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <h1>editorjs-yjs relay local demo</h1>
+  <p class="hint">
+    Two independent Y.Doc + WebsocketProvider connections to the same room, both in this one page — stands in for two browser tabs. Not editorjs-yjs (doesn't exist yet); exercises the relay's sync + awareness channels directly.
+  </p>
+  <div class="panes">
+    <div class="pane" data-name="Marco" data-color="#3a9bd9">
+      <h2>Marco</h2>
+      <span class="status status--connecting">connecting</span>
+      <div class="presence"></div>
+      <div class="messages"></div>
+      <div class="row">
+        <input class="input" type="text" placeholder="Type a message…">
+        <button class="send">Send</button>
+      </div>
+    </div>
+    <div class="pane" data-name="Sasha" data-color="#e2a03a">
+      <h2>Sasha</h2>
+      <span class="status status--connecting">connecting</span>
+      <div class="presence"></div>
+      <div class="messages"></div>
+      <div class="row">
+        <input class="input" type="text" placeholder="Type a message…">
+        <button class="send">Send</button>
+      </div>
+    </div>
+  </div>
+  <script src="dist/bundle.js"></script>
+</body>
+</html>

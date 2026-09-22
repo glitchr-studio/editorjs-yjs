@@ -1,0 +1,23 @@
+{
+  "name": "editorjs-yjs-relay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Auth-gated y-websocket relay for editorjs-yjs. An app builds it straight from this repository (docker compose build context <repo>.git#<commit>:relay); it is not part of the published npm package.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "example:build": "esbuild example/client.js --bundle --outfile=example/dist/bundle.js --format=iife"
+  },
+  "license": "GPL",
+  "dependencies": {
+    "ws": "^8.18.0",
+    "y-websocket": "^2.1.0",
+    "yjs": "^13.6.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

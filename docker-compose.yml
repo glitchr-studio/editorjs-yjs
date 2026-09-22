@@ -3,8 +3,8 @@
 #
 #     make demo     ->  http://localhost:8089
 #
-# The relay here is y-websocket's own bundled server, not glitchr's
-# collab-relay. That is deliberate. This package is backend-agnostic - it takes
+# The relay here is y-websocket's own bundled server, not the reference relay
+# in relay/. That is deliberate. This package is backend-agnostic - it takes
 # a websocket URL, a room, a ticket and a user identity, and assumes nothing
 # else - so its demo must not drag in a particular backend to run. y-websocket
 # is already a devDependency, and it ignores the ticket the page mints, which

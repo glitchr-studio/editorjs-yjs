@@ -22,9 +22,11 @@ Example host application:
 `EditorType`. This class creates tickets. This class finds the current
 user's name and color. This class decides the room key.
 
-Example relay: [`collab-relay`](../base-bundle/collab-relay), inside
-base-bundle. This directory contains a reference relay and a local
-docker-compose demonstration.
+Reference relay: [`relay/`](relay/), in this repository. This directory
+contains an authentication-gated relay and a local docker-compose
+demonstration. The relay is not part of the npm package. An app builds the
+relay image from this repository, pinned to a commit. Refer to
+[`relay/README.md`](relay/README.md).
 
 ## Installation
 
@@ -183,11 +185,13 @@ The browser reaches the relay directly, so the page cannot discover a
 remapped port on its own. The `?ws=` parameter supplies it.
 
 The relay in this demo is `y-websocket`'s own bundled server, not
-[`collab-relay`](../base-bundle/collab-relay). This package assumes nothing
+the reference [`relay/`](relay/). This package assumes nothing
 about the backend, so its demo must not require a particular one. That
 server ignores the ticket, which suits a demo. To exercise a real
 ticket-checking relay, start that relay and pass its address through the
-same `?ws=` parameter.
+same `?ws=` parameter. The reference relay accepts the demo's tickets when
+it runs with `COLLAB_TICKET_SECRET=dev-secret`, as in
+`relay/docker-compose.yml`.
 
 The example creates a false ticket inside the browser. This ticket uses a
 Web Crypto HMAC signature. This ticket uses a shared `dev-secret` value.

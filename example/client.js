@@ -1,10 +1,10 @@
 // This file is the editorjs-yjs test harness. This file creates two real
 // EditorJS instances, on one page. Each instance uses editorjs-yjs
 // separately. Both instances connect to the same collab room, over a
-// separate collab-relay instance. You must run this relay instance
+// separate relay instance (for example relay/ in this repository). You must run this relay instance
 // yourself. This file creates a false ticket inside the browser, through
 // a Web Crypto HMAC signature, against a shared dev secret. This method
-// matches collab-relay's own example/client.js file. This method
+// matches relay/example/client.js. This method
 // replaces the host app's real ticket endpoint, because editorjs-yjs
 // makes no assumption about that endpoint.
 import EditorJS from '@editorjs/editorjs';
