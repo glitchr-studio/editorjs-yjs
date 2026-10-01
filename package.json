@@ -24,8 +24,8 @@
   "author": "Marco Meyer <marco.meyer@glitchr.io>",
   "license": "GPL",
   "repository": {
-    "url": "ssh://git@gitlab.glitchr.dev:public-repository/javascript/editor-js/yjs.git",
-    "type": "git"
+    "type": "git",
+    "url": "git+https://github.com/glitchr-studio/editorjs-yjs.git"
   },
   "peerDependencies": {
     "y-websocket": "^2.1.0",
